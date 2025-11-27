@@ -30,6 +30,21 @@ const AuthPage = () => {
         @media (max-width: 768px) {
           html, body { overflow: auto; }
         }
+        .scroll-panel {
+          scrollbar-width: thin;
+          scrollbar-color: #8b5cf6 #05000b;
+        }
+        .scroll-panel::-webkit-scrollbar {
+          width: 8px;
+        }
+        .scroll-panel::-webkit-scrollbar-track {
+          background: #05000b;
+          border-radius: 999px;
+        }
+        .scroll-panel::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, #8b5cf6, #4c1d95);
+          border-radius: 999px;
+        }
       `}</style>
 
       <div
@@ -57,7 +72,9 @@ const AuthPage = () => {
                 onClick={() => navigate("/")}
                 className="mb-4 inline-flex items-center gap-2 text-xs sm:text-sm text-white/70 hover:text-white transition"
               >
-                <span className="text-lg">←</span>
+                <span className="w-6 h-6 rounded-full bg-black/70 flex items-center justify-center text-[13px]">
+                  ←
+                </span>
                 <span>Back to Dashboard</span>
               </button>
 
@@ -79,57 +96,52 @@ const AuthPage = () => {
             </div>
 
             <div className="flex-1">
-              <div className="bg-black/85 border border-white/15 rounded-3xl px-5 sm:px-7 md:px-8 py-5 sm:py-7 shadow-[0_0_30px_rgba(0,0,0,1)]">
-                <div className="flex items-center justify-between mb-4">
+              <div className="bg-black/85 border border-white/15 rounded-3xl px-5 sm:px-7 md:px-8 py-5 sm:py-7 shadow-[0_0_30px_rgba(0,0,0,1)] scroll-panel max-h-[80vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-5">
                   <h2 className="text-lg sm:text-xl font-bold text-white tracking-wide">
-                    {mode === "login" ? "Login to your account" : "Create an account"}
+                    {mode === "login" ? "Login to your account" : "Create your account"}
                   </h2>
                   <button
                     type="button"
                     onClick={toggleMode}
-                    className="text-[10px] sm:text-xs text-white/70 hover:text-white underline-offset-2 hover:underline"
+                    className="inline-flex items-center gap-2 text-[11px] sm:text-xs md:text-sm px-3 py-1.5 rounded-full border border-white/30 bg-black/60 text-white/80 hover:text-white hover:border-[#c4b5fd] hover:bg-black transition-all duration-200"
                   >
-                    {mode === "login"
-                      ? "New here? Sign up"
-                      : "Have an account? Login"}
+                    <span>{mode === "login" ? "New here?" : "Already a member?"}</span>
+                    <span className="font-semibold text-[#c4b5fd]">
+                      {mode === "login" ? "Sign up" : "Login"}
+                    </span>
                   </button>
                 </div>
 
                 <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
                   {mode === "signup" && (
                     <div className="flex flex-col gap-1">
-                      <label className="text-[11px] sm:text-xs text-white/80">
-                        Full Name
-                      </label>
+                      <span className="text-[11px] sm:text-xs text-white/80">Full Name</span>
                       <input
                         type="text"
                         required
-                        className="w-full rounded-full px-4 py-2.5 bg-black border border-white/20 text-[11px] sm:text-xs md:text-sm focus:outline-none focus:border-white focus:ring-1 focus:ring-white"
+                        className="w-full rounded-full px-4 py-2.5 bg-black border border-white/20 text-[11px] sm:text-xs md:text-sm focus:outline-none focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7]"
                         placeholder="Enter your name"
                       />
                     </div>
                   )}
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] sm:text-xs text-white/80">
-                      Email
-                    </label>
+                    <span className="text-[11px] sm:text-xs text-white/80">Email</span>
                     <input
                       type="email"
                       required
-                      className="w-full rounded-full px-4 py-2.5 bg-black border border-white/20 text-[11px] sm:text-xs md:text-sm focus:outline-none focus:border-white focus:ring-1 focus:ring-white"
+                      className="w-full rounded-full px-4 py-2.5 bg-black border border-white/20 text-[11px] sm:text-xs md:text-sm focus:outline-none focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7]"
                       placeholder="you@example.com"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] sm:text-xs text-white/80">
-                      Password
-                    </label>
+                    <span className="text-[11px] sm:text-xs text-white/80">Password</span>
                     <input
                       type="password"
                       required
-                      className="w-full rounded-full px-4 py-2.5 bg-black border border-white/20 text-[11px] sm:text-xs md:text-sm focus:outline-none focus:border-white focus:ring-1 focus:ring-white"
+                      className="w-full rounded-full px-4 py-2.5 bg-black border border-white/20 text-[11px] sm:text-xs md:text-sm focus:outline-none focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7]"
                       placeholder="••••••••"
                     />
                   </div>
@@ -139,7 +151,7 @@ const AuthPage = () => {
                       <input
                         type="checkbox"
                         required
-                        className="w-3 h-3 sm:w-3.5 sm:h-3.5 accent-[#7a1bca]"
+                        className="w-3.5 h-3.5 accent-[#a855f7]"
                       />
                       <span>
                         I agree to the Terms of Service and Privacy Policy.
@@ -149,14 +161,14 @@ const AuthPage = () => {
 
                   <button
                     type="submit"
-                    className="w-full mt-2 rounded-full px-4 py-2.5 sm:py-3 text-sm sm:text-base font-bold bg-white text-black hover:bg-[#7a1bca] hover:text-white transition-all duration-200 hover:shadow-[0_0_20px_rgba(122,27,202,0.9)]"
+                    className="w-full mt-2 rounded-full px-4 py-2.7 sm:py-3 text-sm sm:text-base font-semibold bg-gradient-to-r from-white via-slate-100 to-white text-black tracking-wide hover:from-[#a855f7] hover:via-[#7c3aed] hover:to-[#4c1d95] hover:text-white hover:shadow-[0_0_22px_rgba(168,85,247,0.9)] transition-all duration-200"
                   >
                     {mode === "login" ? "Login" : "Create account"}
                   </button>
                 </form>
 
-                <p className="mt-3 text-[9px] sm:text-[10px] text-white/55 text-center">
-                  This is a demo authentication flow. You will be taken back to the dashboard after submit.
+                <p className="mt-4 text-[9px] sm:text-[10px] text-white/55 text-center">
+                  This is a demo authentication flow. After submit you will be taken back to the dashboard.
                 </p>
               </div>
             </div>

@@ -1,10 +1,9 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import bgImage from "../assets/bg.jpg";
 import textureImg from "../assets/texture.jpg";
 
-
-const quizData = [
+const staticQuizData = [
   {
     topicId: "react",
     topic: "React Basics",
@@ -104,173 +103,43 @@ const quizData = [
   },
 ];
 
-const allQuestions = quizData.reduce((acc, topic) => {
-  const mapped = topic.questions.map((q) => ({
-    ...q,
-    topicId: topic.topicId,
-    topicName: topic.topic,
-  }));
-  return acc.concat(mapped);
-}, []);
-
-const totalQuestions = allQuestions.length;
-
-const questionMap = allQuestions.reduce((map, q) => {
-  map[q.id] = q;
-  return map;
-}, {});
-
-
-const ProgressBar = ({ currentIndex, total }) => {
-  const percent = ((currentIndex + 1) / total) * 100;
-
-  return (
-    <div className="w-full mb-2 sm:mb-3">
-      <div className="flex justify-between text-[10px] sm:text-xs text-white mb-1 tracking-wide">
-        <span className="font-semibold bg-gradient-to-r from-white via-[#e9d5ff] to-white bg-clip-text text-transparent">
-          Progress
-        </span>
-        <span>
-          {currentIndex + 1}/{total}
-        </span>
-      </div>
-      <div className="w-full h-1.5 bg-black rounded-full overflow-hidden">
-        <div
-          className="h-full bg-[#7a1bca] transition-all duration-300"
-          style={{ width: `${percent}%` }}
-        />
-      </div>
-    </div>
-  );
-};
-
-const TopicItem = React.memo(
-  ({
-    topicId,
-    name,
-    correct,
-    incorrect,
-    isActive,
-    onClick,
-    total,
-    lastChangeTopicId,
-    lastChangeIsCorrect,
-  }) => {
-    const answered = correct + incorrect;
-    const completion = total > 0 ? Math.round((answered / total) * 100) : 0;
-
-    const highlightCorrect =
-      lastChangeTopicId === topicId && lastChangeIsCorrect;
-    const highlightIncorrect =
-      lastChangeTopicId === topicId && lastChangeIsCorrect === false;
-
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        className={`w-full p-2.5 rounded-2xl flex flex-col gap-1.5 text-left
-          transition-all duration-300 ease-out
-          ${
-            isActive
-              ? "bg-[#070014] border border-white shadow-[0_0_18px_rgba(122,27,202,0.9)] ring-1 ring-[#7a1bca]"
-              : "bg-[#140026] border border-black/60 shadow-md"
-          }
-          hover:bg-[#1b0538] hover:border-white hover:shadow-[0_0_22px_rgba(122,27,202,1)] hover:-translate-y-[2px]`}
-      >
-        <div className="flex justify-between items-center">
-          <span className="text-xs sm:text-sm text-white font-semibold tracking-wide">
-            {name}
-          </span>
-          <div className="flex space-x-2 flex-shrink-0">
-            <div className="flex items-center gap-1">
-              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#22c55e] to-[#15803d] flex items-center justify-center text-[9px] font-extrabold text-black shadow-[0_0_6px_rgba(34,197,94,0.7)]">
-                ✓
-              </div>
-              <span
-                className={`text-[10px] sm:text-xs font-extrabold ${
-                  highlightCorrect ? "text-[#22c55e] score-pulse" : "text-white"
-                }`}
-              >
-                <span
-                  key={`${topicId}-correct-${correct}`}
-                  className="score-anim-down"
-                >
-                  {correct}
-                </span>
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#ef4444] to-[#b91c1c] flex items-center justify-center text-[9px] font-extrabold text-black shadow-[0_0_6px_rgba(239,68,68,0.7)]">
-                ✕
-              </div>
-              <span
-                className={`text-[10px] sm:text-xs font-extrabold ${
-                  highlightIncorrect
-                    ? "text-[#ef4444] score-pulse"
-                    : "text-white"
-                }`}
-              >
-                <span
-                  key={`${topicId}-incorrect-${incorrect}`}
-                  className="score-anim-up"
-                >
-                  {incorrect}
-                </span>
-              </span>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div className="flex justify-between text-[9px] sm:text-[10px] text-white">
-            <span>Completed</span>
-            <span>{completion}%</span>
-          </div>
-          <div className="w-full h-1 bg-black rounded-full overflow-hidden mt-1">
-            <div
-              className="h-full bg-white transition-all duration-300"
-              style={{ width: `${completion}%` }}
-            />
-          </div>
-        </div>
-      </button>
-    );
-  }
-);
-
-const OptionButton = React.memo(
-  ({ option, index, selectedOption, disabled, onSelect }) => {
-    const isSelected = selectedOption === option;
-
-    const base =
-      "option-btn w-full rounded-2xl text-left text-sm sm:text-base md:text-lg font-semibold tracking-wide transition-all duration-200 ease-out relative overflow-hidden";
-    const stateClass = isSelected
-      ? "bg-black text-white border border-[#d8b4fe]"
-      : "bg-[#140025] text-white border border-black/60";
-
-    return (
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => onSelect(option)}
-        className={`${base} ${stateClass} ${
-          disabled
-            ? "cursor-default"
-            : "hover:bg-[#7a1bca] hover:border-white hover:shadow-[0_0_18px_rgba(122,27,202,0.9)] hover:-translate-y-[2px]"
-        } px-4 sm:px-5 py-3 sm:py-4 md:py-4`}
-      >
-        <span className="text-xs sm:text-sm mr-3 sm:mr-4 font-extrabold text-white">
-          {String.fromCharCode(65 + index)}:
-        </span>
-        {option}
-      </button>
-    );
-  }
-);
-
-
 const QuizApp = () => {
+  const location = useLocation();
   const navigate = useNavigate();
+
+  const aiQuestions =
+    location.state && location.state.questions && location.state.mode === "ai"
+      ? location.state.questions
+      : null;
+
+  const baseQuizData = aiQuestions
+    ? [
+        {
+          topicId: "ai",
+          topic:
+            location.state?.topicName ||
+            location.state?.subject ||
+            "AI Generated Quiz",
+          questions: aiQuestions,
+        },
+      ]
+    : staticQuizData;
+
+  const allQuestions = baseQuizData.reduce((acc, topic) => {
+    const mapped = topic.questions.map((q) => ({
+      ...q,
+      topicId: topic.topicId,
+      topicName: topic.topic,
+    }));
+    return acc.concat(mapped);
+  }, []);
+
+  const totalQuestions = allQuestions.length;
+
+  const questionMap = allQuestions.reduce((map, q) => {
+    map[q.id] = q;
+    return map;
+  }, {});
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
@@ -287,7 +156,7 @@ const QuizApp = () => {
   const isLast = currentQuestionIndex === totalQuestions - 1;
 
   const topicScores = useMemo(() => {
-    const scores = quizData.reduce(
+    const scores = baseQuizData.reduce(
       (acc, topic) => ({
         ...acc,
         [topic.topicId]: {
@@ -310,13 +179,13 @@ const QuizApp = () => {
       }
     });
 
-    return quizData.map((topic) => ({
+    return baseQuizData.map((topic) => ({
       ...topic,
       correct: scores[topic.topicId].correct,
       incorrect: scores[topic.topicId].incorrect,
       total: scores[topic.topicId].total,
     }));
-  }, [userAnswers]);
+  }, [userAnswers, baseQuizData, questionMap]);
 
   const totalCorrect = useMemo(() => {
     return Object.keys(userAnswers).reduce((count, qId) => {
@@ -324,7 +193,7 @@ const QuizApp = () => {
       if (!q) return count;
       return userAnswers[qId] === q.answer ? count + 1 : count;
     }, 0);
-  }, [userAnswers]);
+  }, [userAnswers, questionMap]);
 
   const totalAnswered = Object.keys(userAnswers).length;
   const totalIncorrect = totalAnswered - totalCorrect;
@@ -368,7 +237,7 @@ const QuizApp = () => {
       return;
     }
     setCurrentQuestionIndex((prev) => Math.min(prev + 1, totalQuestions - 1));
-  }, [isLast]);
+  }, [isLast, totalQuestions]);
 
   const handlePrevious = useCallback(() => {
     setCurrentQuestionIndex((prev) => Math.max(prev - 1, 0));
@@ -380,7 +249,7 @@ const QuizApp = () => {
       setCurrentQuestionIndex(firstIndex);
       setIsFinished(false);
     }
-  }, []);
+  }, [allQuestions]);
 
   const handleRestart = useCallback(() => {
     setUserAnswers({});
@@ -400,6 +269,32 @@ const QuizApp = () => {
 
   const activeTopicName = currentQuestion.topicName;
 
+  let performanceTitle = "Nice effort!";
+  let performanceDetail =
+    "You have a good base. Review the questions you missed and try again.";
+
+  if (percentage >= 85) {
+    performanceTitle = "Outstanding performance!";
+    performanceDetail =
+      "You’ve mastered this topic. Keep the momentum going with tougher quizzes.";
+  } else if (percentage >= 70) {
+    performanceTitle = "Great job!";
+    performanceDetail =
+      "You understand most of the concepts. A quick revision will make you perfect.";
+  } else if (percentage >= 50) {
+    performanceTitle = "Keep practicing!";
+    performanceDetail =
+      "You’re halfway there. Focus on the incorrect questions and try another round.";
+  } else if (percentage > 0) {
+    performanceTitle = "Good start!";
+    performanceDetail =
+      "Everyone starts somewhere. Revisit your notes and attempt the quiz again.";
+  } else {
+    performanceTitle = "Ready when you are!";
+    performanceDetail =
+      "Start answering questions to see how well you know this topic.";
+  }
+
   return (
     <>
       <style>{`
@@ -409,10 +304,10 @@ const QuizApp = () => {
           padding: 0; 
           font-family: 'Poppins', sans-serif; 
           background-color: #02010a;
-          overflow: hidden; /* no page scroll for quiz */
+          overflow: hidden;
         }
         @media (max-width: 768px) {
-          html, body { overflow: auto; } /* allow on mobiles */
+          html, body { overflow: auto; }
         }
         @keyframes slideDown {
           0% { opacity: 0; transform: translateY(-6px); }
@@ -459,7 +354,7 @@ const QuizApp = () => {
           content: "";
           position: absolute;
           inset: 0;
-          background: linear-gradient(120deg, transparent, rgba(255,255,255,0.4), transparent);
+          background: linear-gradient(120deg, transparent, rgba(255,255,255,0.35), transparent);
           transform: translateX(-130%);
           transition: transform 0.45s ease-out;
           pointer-events: none;
@@ -467,6 +362,24 @@ const QuizApp = () => {
         }
         .option-btn:hover::before {
           transform: translateX(130%);
+        }
+        .panel-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #a855f7 #05000b;
+        }
+        .panel-scroll::-webkit-scrollbar {
+          width: 8px;
+        }
+        .panel-scroll::-webkit-scrollbar-track {
+          background: #05000b;
+          border-radius: 999px;
+        }
+        .panel-scroll::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, #a855f7, #7c3aed);
+          border-radius: 999px;
+        }
+        .panel-scroll::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(180deg, #c4b5fd, #a855f7);
         }
       `}</style>
 
@@ -482,18 +395,16 @@ const QuizApp = () => {
 
         <div className="relative h-full w-full p-2 sm:p-4 flex items-center justify-center">
           <div className="flex flex-row gap-3 sm:gap-4 w-full max-w-7xl h-[88vh]">
-            {}
             <div className="w-[37%] min-w-[260px] h-full">
               <div className="h-full rounded-3xl p-[2px] bg-gradient-to-br from-[#7a1bca] via-[#4e0f9c] to-[#7a1bca] shadow-[0_0_35px_rgba(0,0,0,0.9)] card-enter-top">
                 <div className="h-full p-3 sm:p-4 rounded-3xl bg-[#070014]/85 border border-white/10 backdrop-blur-xl flex flex-col justify-between">
-                  {}
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
                           onClick={() => navigate("/")}
-                          className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#7a1bca] to-[#4e0f9c] flex items-center justify-center text-white text-sm font-extrabold shadow-[0_0_16px_rgba(122,27,202,0.9)] hover:scale-105 transition"
+                          className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#7a1bca] to-[#4e0f9c] flex items-center justify-center text-white text-sm font-extrabold tracking-[0.2em] shadow-[0_0_16px_rgba(122,27,202,0.9)] hover:scale-105 transition"
                         >
                           QZ
                         </button>
@@ -526,23 +437,94 @@ const QuizApp = () => {
                     </h2>
                   </div>
 
-                  {}
                   <div className="flex-1 flex flex-col mb-2 overflow-hidden">
-                    <div className="space-y-2.5 sm:space-y-3 pr-1 pl-1 pt-1 overflow-y-auto">
-                      {topicScores.map((topic) => (
-                        <TopicItem
-                          key={topic.topicId}
-                          topicId={topic.topicId}
-                          name={topic.topic}
-                          correct={topic.correct}
-                          incorrect={topic.incorrect}
-                          total={topic.total}
-                          isActive={topic.topic === activeTopicName}
-                          onClick={() => handleTopicClick(topic.topicId)}
-                          lastChangeTopicId={lastChange?.topicId || null}
-                          lastChangeIsCorrect={lastChange?.isCorrect}
-                        />
-                      ))}
+                    <div className="panel-scroll space-y-2.5 sm:space-y-3 pr-1 pl-1 pt-1 overflow-y-auto">
+                      {topicScores.map((topic) => {
+                        const answered = topic.correct + topic.incorrect;
+                        const completion =
+                          topic.total > 0
+                            ? Math.round((answered / topic.total) * 100)
+                            : 0;
+
+                        const highlightCorrect =
+                          lastChange?.topicId === topic.topicId &&
+                          lastChange?.isCorrect;
+                        const highlightIncorrect =
+                          lastChange?.topicId === topic.topicId &&
+                          lastChange?.isCorrect === false;
+
+                        return (
+                          <button
+                            key={topic.topicId}
+                            type="button"
+                            onClick={() => handleTopicClick(topic.topicId)}
+                            className={`w-full p-2.5 rounded-2xl flex flex-col gap-1.5 text-left transition-all duration-300 ease-out ${
+                              topic.topic === activeTopicName
+                                ? "bg-[#070014] border border-white shadow-[0_0_18px_rgba(122,27,202,0.9)] ring-1 ring-[#7a1bca]"
+                                : "bg-[#140026] border border-black/60 shadow-md"
+                            } hover:bg-[#1b0538] hover:border-white hover:shadow-[0_0_22px_rgba(122,27,202,1)] hover:-translate-y-[2px]`}
+                          >
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs sm:text-sm text-white font-semibold tracking-wide">
+                                {topic.topic}
+                              </span>
+                              <div className="flex space-x-2 flex-shrink-0">
+                                <div className="flex items-center gap-1">
+                                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#22c55e] to-[#15803d] flex items-center justify-center text-[9px] font-extrabold text-black shadow-[0_0_6px_rgba(34,197,94,0.7)]">
+                                    ✓
+                                  </div>
+                                  <span
+                                    className={`text-[10px] sm:text-xs font-extrabold ${
+                                      highlightCorrect
+                                        ? "text-[#22c55e] score-pulse"
+                                        : "text-white"
+                                    }`}
+                                  >
+                                    <span
+                                      className="score-anim-down"
+                                      key={`${topic.topicId}-correct-${topic.correct}`}
+                                    >
+                                      {topic.correct}
+                                    </span>
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-1">
+                                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#ef4444] to-[#b91c1c] flex items-center justify-center text-[9px] font-extrabold text-black shadow-[0_0_6px_rgba(239,68,68,0.7)]">
+                                    ✕
+                                  </div>
+                                  <span
+                                    className={`text-[10px] sm:text-xs font-extrabold ${
+                                      highlightIncorrect
+                                        ? "text-[#ef4444] score-pulse"
+                                        : "text-white"
+                                    }`}
+                                  >
+                                    <span
+                                      className="score-anim-up"
+                                      key={`${topic.topicId}-incorrect-${topic.incorrect}`}
+                                    >
+                                      {topic.incorrect}
+                                    </span>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="flex justify-between text-[9px] sm:text-[10px] text-white">
+                                <span>Completed</span>
+                                <span>{completion}%</span>
+                              </div>
+                              <div className="w-full h-1 bg-black rounded-full overflow-hidden mt-1">
+                                <div
+                                  className="h-full bg-white transition-all duration-300"
+                                  style={{ width: `${completion}%` }}
+                                />
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
 
                       <button
                         type="button"
@@ -577,7 +559,6 @@ const QuizApp = () => {
                     </div>
                   </div>
 
-                  {}
                   <div className="grid grid-cols-2 gap-2 mt-1">
                     <div className="p-2.5 rounded-2xl bg-black text-white text-center shadow-md">
                       <div className="text-[10px] sm:text-xs mb-0.5">
@@ -605,7 +586,6 @@ const QuizApp = () => {
               </div>
             </div>
 
-            {}
             <div className="flex-1 h-full">
               <div className="h-full rounded-3xl p-[2px] bg-gradient-to-br from-[#7a1bca] via-[#4e0f9c] to-[#7a1bca] shadow-[0_0_40px_rgba(0,0,0,1)] card-enter-bottom">
                 <div className="relative h-full p-3 sm:p-5 rounded-3xl bg-gradient-to-br from-[#4e0f9c]/70 via-[#070014] to-[#7a1bca]/80 border border-white/10 flex flex-col backdrop-blur-xl overflow-hidden">
@@ -640,29 +620,43 @@ const QuizApp = () => {
                         </div>
 
                         <div className="flex-1 flex flex-col justify-between">
-                          {}
                           <div className="space-y-2.5 sm:space-y-3 mb-3 flex-1 flex flex-col justify-center">
-                            {currentQuestion.options.map((option, index) => (
-                              <OptionButton
-                                key={option}
-                                option={option}
-                                index={index}
-                                selectedOption={selectedOption}
-                                disabled={isAnswered}
-                                onSelect={handleOptionSelect}
-                              />
-                            ))}
+                            {currentQuestion.options.map((option, index) => {
+                              const isSelected = selectedOption === option;
+                              const base =
+                                "option-btn w-full rounded-2xl text-left text-sm sm:text-base md:text-lg font-semibold tracking-wide transition-all duration-200 ease-out relative overflow-hidden";
+                              const stateClass = isSelected
+                                ? "bg-gradient-to-r from-[#111827] via-black to-[#111827] text-white border border-[#d8b4fe]"
+                                : "bg-[#140025] text-white border border-black/60";
+                              const hover =
+                                "hover:bg-gradient-to-r hover:from-[#7a1bca] hover:to-[#4e0f9c] hover:border-white hover:shadow-[0_0_18px_rgba(122,27,202,0.9)] hover:-translate-y-[2px]";
+
+                              return (
+                                <button
+                                  key={option}
+                                  type="button"
+                                  disabled={isAnswered}
+                                  onClick={() => handleOptionSelect(option)}
+                                  className={`${base} ${stateClass} ${
+                                    isAnswered ? "cursor-default" : hover
+                                  } px-4 sm:px-5 py-3 sm:py-4 md:py-4`}
+                                >
+                                  <span className="text-xs sm:text-sm mr-3 sm:mr-4 font-extrabold text-white">
+                                    {String.fromCharCode(65 + index)}:
+                                  </span>
+                                  {option}
+                                </button>
+                              );
+                            })}
                           </div>
 
-                          {}
                           <div className="min-h-[80px] flex flex-col items-center justify-center gap-2 mb-3">
                             {isAnswered ? (
                               <>
                                 <div className="max-w-md w-full mx-auto rounded-2xl text-center font-semibold text-xs sm:text-sm md:text-base px-4 py-3 shadow-md bg-black/90 border border-white/15 text-white">
                                   <div className="flex items-center justify-center gap-3 mb-1">
                                     <div
-                                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold shadow-[0_0_10px_rgba(0,0,0,0.8)]
-                                      ${
+                                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold shadow-[0_0_10px_rgba(0,0,0,0.8)] ${
                                         selectedOption ===
                                         currentQuestion.answer
                                           ? "bg-gradient-to-br from-[#22c55e] to-[#15803d] text-black"
@@ -677,51 +671,45 @@ const QuizApp = () => {
                                     <span>
                                       {selectedOption ===
                                       currentQuestion.answer
-                                        ? "Correct Answer!"
-                                        : "Incorrect. Review and try again!"}
+                                        ? "Correct answer!"
+                                        : "Incorrect. Try to recall the core concept."}
                                     </span>
                                   </div>
                                   <div className="text-[10px] sm:text-xs text-white/70">
                                     {selectedOption === currentQuestion.answer
-                                      ? "Nice pick! You understood this concept."
-                                      : "Think about the core idea and compare each option."}
+                                      ? "Well done. This concept looks solid for you."
+                                      : "Review your notes on this topic and compare the options carefully."}
                                   </div>
                                 </div>
                                 <button
                                   type="button"
                                   onClick={handleChangeAnswer}
-                                  className="px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold bg-black text-white hover:bg-[#7a1bca] hover:text-white transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_0_16px_rgba(122,27,202,0.8)]"
+                                  className="px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold bg-black text-white border border-white/20 hover:bg-[#7a1bca] hover:border-white hover:text-white transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_0_16px_rgba(122,27,202,0.8)]"
                                 >
-                                  Change Answer
+                                  Change answer
                                 </button>
                               </>
                             ) : (
                               <div className="text-[11px] sm:text-xs text-white/70 text-center max-w-md">
-                                Choose an option above to check your answer and
-                                update your topic stats on the left in real
-                                time.
+                                Choose an option above to check your answer and update your topic stats on the left in real time.
                               </div>
                             )}
                           </div>
 
-                          {}
                           <div className="mt-1 flex justify-between gap-3">
                             <button
                               type="button"
                               onClick={handlePrevious}
                               disabled={isFirst}
-                              className={`px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm md:text-base font-semibold tracking-wide
-                                ${
-                                  isFirst
-                                    ? "bg-black text-white/40 cursor-not-allowed"
-                                    : "bg-black text-white hover:bg-[#7a1bca]"
-                                }
-                                transition-all duration-200 ease-out
-                                ${
-                                  !isFirst
-                                    ? "hover:-translate-y-[1px] hover:shadow-[0_0_16px_rgba(122,27,202,0.8)]"
-                                    : ""
-                                }`}
+                              className={`px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm md:text-base font-semibold tracking-wide ${
+                                isFirst
+                                  ? "bg-black text-white/40 cursor-not-allowed"
+                                  : "bg-gradient-to-r from-black to-black text-white hover:from-[#4b5563] hover:to-black"
+                              } transition-all duration-200 ease-out ${
+                                !isFirst
+                                  ? "hover:-translate-y-[1px] hover:shadow-[0_0_16px_rgba(107,114,128,0.9)]"
+                                  : ""
+                              }`}
                             >
                               {"<<"} Prev
                             </button>
@@ -730,35 +718,31 @@ const QuizApp = () => {
                               type="button"
                               onClick={handleNext}
                               disabled={!isAnswered}
-                              className={`px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm md:text-base font-semibold tracking-wide
-                                ${
-                                  !isAnswered
-                                    ? "bg-black text-white/40 cursor-not-allowed"
-                                    : "bg-black text-white hover:bg-[#7a1bca]"
-                                }
-                                transition-all duration-200 ease-out
-                                ${
-                                  isAnswered
-                                    ? "hover:-translate-y-[1px] hover:shadow-[0_0_16px_rgba(122,27,202,0.8)]"
-                                    : ""
-                                }`}
+                              className={`px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm md:text-base font-semibold tracking-wide ${
+                                !isAnswered
+                                  ? "bg-black text-white/40 cursor-not-allowed"
+                                  : "bg-gradient-to-r from-[#a855f7] to-[#4e0f9c] text-white hover:shadow-[0_0_20px_rgba(122,27,202,0.9)]"
+                              } transition-all duration-200 ease-out ${
+                                isAnswered
+                                  ? "hover:-translate-y-[1px]"
+                                  : ""
+                              }`}
                             >
-                              {isLast ? "Finish Quiz" : "Next >>"}
+                              {isLast ? "Finish quiz" : "Next >>"}
                             </button>
                           </div>
                         </div>
                       </>
                     ) : (
-                      
                       <div className="flex flex-col items-center justify-center text-center flex-1">
                         <div className="w-full max-w-md mb-4">
                           <div className="h-2 rounded-full bg-black overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-[#7a1bca] via-white to-[#7a1bca] completion-sweep" />
+                            <div className="h-full bg-gradient-to-r from-[#7a1bca] via-white to-[#7a1bca] completionSweep" />
                           </div>
                         </div>
 
-                        <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white mb-3 tracking-wide">
-                          Quiz Completed
+                        <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white mb-2 tracking-wide">
+                          Quiz completed
                         </h2>
 
                         <p className="text-sm sm:text-lg text-white mb-1 tracking-wide">
@@ -794,25 +778,34 @@ const QuizApp = () => {
                           </span>
                         </div>
 
+                        <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-1">
+                          {performanceTitle}
+                        </h3>
                         <p className="text-[11px] sm:text-xs md:text-sm text-white/80 mb-5 max-w-md leading-relaxed">
-                          Great job! Explore topic stats from the left panel or
-                          restart the quiz to aim for an even better score.
+                          {performanceDetail}
                         </p>
 
                         <div className="flex flex-wrap justify-center gap-3">
                           <button
                             type="button"
                             onClick={handleRestart}
-                            className="px-5 sm:px-7 py-2 sm:py-2.5 rounded-full text-sm sm:text-base font-bold bg-black text-white hover:bg-[#7a1bca] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_0_18px_rgba(122,27,202,0.9)]"
+                            className="px-5 sm:px-7 py-2 sm:py-2.5 rounded-full text-sm sm:text-base font-semibold bg-gradient-to-r from-black to-black text-white border border-white/20 hover:border-white hover:from-[#4b5563] hover:to-black transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_0_18px_rgba(107,114,128,0.9)]"
                           >
-                            Restart Quiz
+                            Restart quiz
                           </button>
                           <button
                             type="button"
                             onClick={() => navigate("/")}
-                            className="px-5 sm:px-7 py-2 sm:py-2.5 rounded-full text-sm sm:text-base font-bold bg-white text-black hover:bg-[#7a1bca] hover:text-white transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_0_18px_rgba(122,27,202,0.9)]"
+                            className="px-5 sm:px-7 py-2 sm:py-2.5 rounded-full text-sm sm:text-base font-semibold bg-gradient-to-r from-[#a855f7] to-[#4e0f9c] text-white hover:shadow-[0_0_20px_rgba(122,27,202,0.9)] transition-all duration-200 hover:-translate-y-[1px]"
                           >
-                            Back to Home
+                            Back to home
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => navigate("/auth")}
+                            className="px-5 sm:px-7 py-2 sm:py-2.5 rounded-full text-sm sm:text-base font-semibold bg-white text-black hover:bg-gradient-to-r hover:from-[#a855f7] hover:to-[#4e0f9c] hover:text-white hover:shadow-[0_0_20px_rgba(122,27,202,0.9)] transition-all duration-200 hover:-translate-y-[1px]"
+                          >
+                            Create account to save progress
                           </button>
                         </div>
                       </div>
@@ -824,7 +817,6 @@ const QuizApp = () => {
           </div>
         </div>
 
-        {}
         {showProgressDetails && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
             <div
@@ -833,10 +825,10 @@ const QuizApp = () => {
             />
             <div className="relative z-10 w-full max-w-md">
               <div className="rounded-3xl p-[2px] bg-gradient-to-br from-[#b794ff] via-[#7a1bca] to-[#4e0f9c] shadow-[0_0_28px_rgba(0,0,0,1)]">
-                <div className="rounded-3xl bg-black/85 backdrop-blur-xl p-4 sm:p-5">
+                <div className="rounded-3xl bg-black/85 backdrop-blur-xl p-4 sm:5">
                   <div className="flex justify-between items-center mb-3">
                     <h3 className="text-lg sm:text-xl font-bold text-white tracking-wide">
-                      Topic-wise Progress
+                      Topic-wise progress
                     </h3>
                     <button
                       type="button"
@@ -846,7 +838,7 @@ const QuizApp = () => {
                       Close
                     </button>
                   </div>
-                  <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                  <div className="panel-scroll space-y-3 max-h-72 overflow-y-auto pr-1">
                     {topicScores.map((topic) => {
                       const attempted = topic.correct + topic.incorrect;
                       const notAttempted = topic.total - attempted;
@@ -896,6 +888,29 @@ const QuizApp = () => {
         )}
       </div>
     </>
+  );
+};
+
+const ProgressBar = ({ currentIndex, total }) => {
+  const percent = ((currentIndex + 1) / total) * 100;
+
+  return (
+    <div className="w-full mb-2 sm:mb-3">
+      <div className="flex justify-between text-[10px] sm:text-xs text-white mb-1 tracking-wide">
+        <span className="font-semibold bg-gradient-to-r from-white via-[#e9d5ff] to-white bg-clip-text text-transparent">
+          Progress
+        </span>
+        <span>
+          {currentIndex + 1}/{total}
+        </span>
+      </div>
+      <div className="w-full h-1.5 bg-black rounded-full overflow-hidden">
+        <div
+          className="h-full bg-[#7a1bca] transition-all duration-300"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    </div>
   );
 };
 
